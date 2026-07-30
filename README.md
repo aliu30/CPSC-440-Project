@@ -39,13 +39,17 @@ The implemented experiments address the following questions:
 
 - The notebook downloads `CogComp/trec` through Hugging Face Datasets and uses
   the dataset's `coarse_label` target.
-- It constructs nominal 100-, 500-, and 1,000-example settings by sampling the
-  same number of examples per coarse class with random seed 42. Because the
-  implementation uses integer division across six classes, the resulting
-  balanced subsets can contain slightly fewer examples than the nominal setting.
+- It constructs nominal 100-, 500-, and 1,000-example settings with random seed
+  42. The nominal 100 setting samples 16 examples per class (96 total), and the
+  nominal 500 setting samples 83 examples per class (498 total).
+- The nominal 1,000 setting requests 166 examples per class, but the TREC
+  training split contains only 86 `ABBR` examples. Because
+  `make_balanced_subset` samples `min(len(x), n_per_class)` from each class, this
+  setting is imbalanced and contains 916 examples.
 - The unmodified full TREC training split is the fourth setting.
 - Each setting is divided into 80% training and 20% validation partitions with
-  a stratified split and random seed 42.
+  a stratified split and random seed 42. For the nominal 1,000 setting, this
+  produces 732 training examples and 184 validation examples.
 - The official TREC test split is reused for final evaluation at every data
   setting. Hyperparameters are selected on validation macro-F1, not on the test
   split.
@@ -126,7 +130,10 @@ earlier cells.
 
 ## Reproducibility notes
 
-- Balanced subset sampling and train/validation splitting use seed 42.
+- Subset sampling and stratified train/validation splitting use seed 42. The
+  nominal 100 and 500 subsets contain 96 and 498 examples, respectively; the
+  nominal 1,000 subset is imbalanced because only 86 `ABBR` training examples
+  are available, giving 916 examples before its 732/184 train/validation split.
 - The notebook does not set NumPy or PyTorch training seeds, so neural-model
   results may vary between runs and hardware configurations.
 - Package versions are left mostly unconstrained to reflect the notebook, except
