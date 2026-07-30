@@ -1,45 +1,135 @@
-
 # Low-Resource Question Classification on TREC
 
-This project studies low-resource question classification using the TREC question classification dataset. The task is to classify natural-language questions into six coarse-grained categories: `ABBR`, `DESC`, `ENTY`, `HUM`, `LOC`, and `NUM`.
+This repository contains a CPSC 440 course project on **low-resource question
+classification**. The task is to assign an English question from the TREC
+dataset to one of six coarse classes: abbreviation (`ABBR`), description
+(`DESC`), entity (`ENTY`), human (`HUM`), location (`LOC`), or numeric answer
+(`NUM`).
 
-## Project Goal
+The project compares conventional text classifiers, a recurrent neural model,
+and a pretrained transformer under several limited-data settings. It also
+examines whether each model's confidence is consistent with its observed
+accuracy. The notebook is preserved as the primary record of the implemented
+course work; this README describes its workflow without adding unreported
+results or conclusions.
 
-The goal is to compare how different model families perform when only a limited amount of labelled training data is available. In addition to classification performance, this project also evaluates confidence calibration.
+## Research questions
 
-## Models Compared
+The implemented experiments address the following questions:
 
-The notebook compares four models:
+1. How does the amount of labelled training data affect question-classification
+   performance across model families?
+2. In limited-data settings, how do bag-of-words and TF-IDF baselines compare
+   with a GloVe-initialized BiLSTM and fine-tuned DistilBERT?
+3. How does predictive calibration vary by model and training-set size, as
+   measured by Expected Calibration Error (ECE) and reliability diagrams?
 
-- Multinomial Naive Bayes with bag-of-words features
-- Logistic Regression with TF-IDF features
-- BiLSTM with pretrained GloVe embeddings
-- DistilBERT fine-tuned for six-class classification
+## Implemented models
 
-## Experimental Setup
+| Model family | Text representation | Classifier and notebook configuration |
+| --- | --- | --- |
+| Multinomial Naive Bayes | Lowercased bag-of-words counts from `CountVectorizer` | Selects smoothing `alpha` from 0.1, 0.5, 1.0, and 2.0 using validation macro-F1 |
+| Logistic Regression | Lowercased TF-IDF features from `TfidfVectorizer` | Selects `C` from 0.1, 1.0, and 10.0 using validation macro-F1; L-BFGS is run for at most 1,000 iterations |
+| BiLSTM with GloVe | A vocabulary built from each training split, initialized with 100-dimensional GloVe 6B vectors; sequences are padded or truncated to 30 tokens | Bidirectional LSTM with hidden size 128 and dropout 0.3; embeddings are fine-tuned; Adam (learning rate 0.001), batch size 32, and 10 epochs |
+| DistilBERT | `distilbert-base-uncased` tokenizer with padding/truncation to 64 tokens | Six-class sequence classifier fine-tuned for 4 epochs with learning rate 2e-5, weight decay 0.01, training batch size 16, and evaluation batch size 32; the best checkpoint is selected by validation macro-F1 |
 
-We create several low-resource training settings from the TREC training set:
+## Experimental design
 
-- 100 examples
-- 500 examples
-- 1000 examples
-- Full training set
+### Data and splits
 
-Each setting is split into training and validation data. The official TREC test set is used only for final evaluation.
+- The notebook downloads `CogComp/trec` through Hugging Face Datasets and uses
+  the dataset's `coarse_label` target.
+- It constructs nominal 100-, 500-, and 1,000-example settings by sampling the
+  same number of examples per coarse class with random seed 42. Because the
+  implementation uses integer division across six classes, the resulting
+  balanced subsets can contain slightly fewer examples than the nominal setting.
+- The unmodified full TREC training split is the fourth setting.
+- Each setting is divided into 80% training and 20% validation partitions with
+  a stratified split and random seed 42.
+- The official TREC test split is reused for final evaluation at every data
+  setting. Hyperparameters are selected on validation macro-F1, not on the test
+  split.
 
-## Evaluation Metrics
+The notebook trains every model family at each of the four data settings. The
+classical models search the hyperparameters shown above. The BiLSTM and
+DistilBERT sections currently each specify a single candidate configuration,
+while retaining the same validation-selection structure.
 
-The models are evaluated using:
+### Evaluation
 
-- Accuracy
-- Macro-F1
-- Expected Calibration Error (ECE)
-- Reliability diagrams
-- Confusion matrix
-- Representative misclassified examples
+The notebook records the following test metrics for every model and data
+setting:
 
-## Files
+- **Accuracy**
+- **Macro-averaged F1**, which weights each of the six classes equally
+- **Expected Calibration Error (ECE)** using 10 confidence bins
 
-- `project.ipynb`: main notebook containing data loading, preprocessing, model training, evaluation, and plots
+It then plots test macro-F1 and ECE against training-set size. Reliability
+diagrams are produced for the nominal 500-example and full-data settings. The
+final analysis also creates a DistilBERT confusion matrix for the full-data run
+and lists its ten highest-confidence misclassifications. Results are generated
+at execution time and are intentionally not reproduced as fixed claims here.
 
+## Repository contents
 
+| Path | Purpose |
+| --- | --- |
+| `CPSC_440_Final_Project.ipynb` | Original course-project notebook containing data preparation, training, evaluation, and plots |
+| `README.md` | Project scope, experimental design, and reproduction instructions |
+| `requirements.txt` | Python packages imported or required by the notebook |
+
+Training creates local DistilBERT checkpoint directories named
+`distilbert_trec_<setting>_<learning-rate>`. The BiLSTM section downloads and
+extracts the Stanford GloVe 6B archive in the working directory if
+`glove.6B.100d.txt` is absent. These generated artifacts are not part of the
+repository.
+
+## Setup
+
+The notebook downloads TREC, GloVe, and pretrained DistilBERT assets, so its
+first complete run requires an internet connection and sufficient disk space.
+Python 3.10 or later is recommended.
+
+### Google Colab
+
+1. Open `CPSC_440_Final_Project.ipynb` in Colab.
+2. For the neural and transformer sections, select a GPU runtime from
+   **Runtime > Change runtime type**.
+3. Run the cells in order from the beginning. The notebook installs its
+   Datasets constraint and transformer dependencies in dedicated setup cells.
+
+### Local environment
+
+Create an isolated environment from the repository root:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate       # Windows PowerShell: .venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+```
+
+Then start a notebook interface already available in your environment (for
+example, JupyterLab or the VS Code notebook editor), open
+`CPSC_440_Final_Project.ipynb`, and run all cells in order. If needed, install a
+local interface separately, for example with `python -m pip install jupyterlab`.
+The notebook's GloVe download cell also expects the command-line tools `wget`
+and `unzip`; alternatively, download and extract the GloVe 6B archive manually
+so that `glove.6B.100d.txt` is in the repository root.
+
+Colab or another **GPU-enabled environment is recommended** for the BiLSTM and
+DistilBERT experiments. The notebook selects CUDA automatically when available,
+but a complete CPU run—especially transformer fine-tuning across all four data
+settings—can be slow. Execute cells sequentially because later plots and error
+analysis use models, predictions, and result tables retained in memory by
+earlier cells.
+
+## Reproducibility notes
+
+- Balanced subset sampling and train/validation splitting use seed 42.
+- The notebook does not set NumPy or PyTorch training seeds, so neural-model
+  results may vary between runs and hardware configurations.
+- Package versions are left mostly unconstrained to reflect the notebook, except
+  for `datasets<4.0.0`, which matches its explicit setup cell.
+- No notebook cells or stored outputs were changed as part of this documentation
+  update, preserving the submitted workflow and its academic provenance.
