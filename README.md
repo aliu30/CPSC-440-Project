@@ -80,7 +80,7 @@ at execution time and are intentionally not reproduced as fixed claims here.
 
 | Path | Purpose |
 | --- | --- |
-| `CPSC_440_Final_Project.ipynb` | Original course-project notebook containing data preparation, training, evaluation, and plots |
+| `trec_low_resource_question_classification.ipynb` | Original course-project notebook containing data preparation, training, evaluation, and plots |
 | `README.md` | Project scope, experimental design, and reproduction instructions |
 | `requirements.txt` | Python packages imported or required by the notebook |
 
@@ -98,7 +98,7 @@ Python 3.10 or later is recommended.
 
 ### Google Colab
 
-1. Open `CPSC_440_Final_Project.ipynb` in Colab.
+1. Open `trec_low_resource_question_classification.ipynb` in Colab.
 2. For the neural and transformer sections, select a GPU runtime from
    **Runtime > Change runtime type**.
 3. Run the cells in order from the beginning. The notebook installs its
@@ -117,7 +117,7 @@ python -m pip install -r requirements.txt
 
 Then start a notebook interface already available in your environment (for
 example, JupyterLab or the VS Code notebook editor), open
-`CPSC_440_Final_Project.ipynb`, and run all cells in order. If needed, install a
+`trec_low_resource_question_classification.ipynb`, and run all cells in order. If needed, install a
 local interface separately, for example with `python -m pip install jupyterlab`.
 The notebook's GloVe download cell also expects the command-line tools `wget`
 and `unzip`; alternatively, download and extract the GloVe 6B archive manually
