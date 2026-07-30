@@ -6,6 +6,8 @@ dataset to one of six coarse classes: abbreviation (`ABBR`), description
 (`DESC`), entity (`ENTY`), human (`HUM`), location (`LOC`), or numeric answer
 (`NUM`).
 
+This project was developed jointly for UBC CPSC 440 by [Andrew Young Liu](https://github.com/aliu30) and [@Diamond01010111](https://github.com/Diamond01010111).
+
 The project compares conventional text classifiers, a recurrent neural model,
 and a pretrained transformer under several limited-data settings. It also
 examines whether each model's confidence is consistent with its observed
